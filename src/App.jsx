@@ -4,7 +4,7 @@ import {
   getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, setDoc 
 } from "firebase/firestore";
 
-// --- CONFIGURACIÓN ---
+// --- CONFIGURACIÓN (TU MISMA CONFIGURACIÓN) ---
 const firebaseConfig = {
   apiKey: "AIzaSyCYKvO_rQo8gKNHNNrAtMb8CDv2l7Ch2xk",
   authDomain: "mis-finanzas-app-c6de7.firebaseapp.com",
@@ -17,85 +17,81 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- COMPONENTES ---
+// --- COMPONENTES ESTILIZADOS (TEMA OSCURO ELEGANTE) ---
+
+// Tarjetas: Fondo gris oscuro, borde sutil, sin sombra pesada
 const Card = ({ children, className = '' }) => (
-  <div className={`bg-white rounded-2xl shadow-sm border border-pink-100 p-5 ${className}`}>{children}</div>
+  <div className={`bg-zinc-900 rounded-2xl border border-zinc-800 p-5 ${className}`}>{children}</div>
 );
 
+// Botones: Acento dorado, texto oscuro para contraste en el primario
 const Button = ({ children, onClick, variant = 'primary', className = '' }) => {
   const styles = {
-    primary: "bg-pink-500 text-white hover:bg-pink-600 shadow-md shadow-pink-200",
-    secondary: "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50",
-    success: "bg-emerald-500 text-white hover:bg-emerald-600 shadow-md shadow-emerald-200",
-    danger: "bg-red-500 text-white hover:bg-red-600 shadow-md shadow-red-200",
+    primary: "bg-amber-500 text-zinc-900 hover:bg-amber-400 font-bold",
+    secondary: "bg-zinc-800 text-zinc-300 border border-zinc-700 hover:bg-zinc-700 font-medium",
+    success: "bg-emerald-600 text-white hover:bg-emerald-500 font-bold",
+    danger: "bg-red-600 text-white hover:bg-red-500 font-bold",
   };
   return (
-    <button onClick={onClick} className={`px-4 py-3 rounded-xl font-bold transition-all active:scale-95 ${styles[variant]} ${className}`}>
+    <button onClick={onClick} className={`px-4 py-3 rounded-xl transition-all active:scale-95 tracking-wide ${styles[variant]} ${className}`}>
       {children}
     </button>
   );
 };
 
-// --- PANTALLA DE ACCESO ---
+// Inputs: Fondo oscuro, texto claro, borde dorado al enfocar
+const inputClasses = "w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-zinc-100 placeholder-zinc-500 transition-all";
+
+// --- PANTALLA DE ACCESO DARK ---
 const Login = ({ onEnter }) => {
   const [pin, setPin] = useState('');
   return (
-    <div className="min-h-screen bg-pink-50 flex items-center justify-center p-6">
-      <Card className="w-full max-w-sm text-center py-10">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">App Listado</h1>
-        <p className="text-gray-400 mb-6">Ingresen su clave de equipo</p>
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-6">
+      <Card className="w-full max-w-sm text-center py-12 border-zinc-800/50">
+        <div className="text-5xl mb-6 opacity-80">🖤</div>
+        <h1 className="text-xl font-medium text-zinc-100 mb-2 tracking-wider uppercase">Acceso Privado</h1>
+        <p className="text-zinc-500 mb-8 text-sm">Introduce la clave de equipo</p>
         <input 
           type="password" 
           value={pin}
           onChange={(e) => setPin(e.target.value)}
-          placeholder="PIN"
-          className="text-center text-3xl tracking-[1em] w-full border-b-2 border-pink-200 focus:border-pink-500 outline-none py-2 mb-6 bg-transparent"
+          placeholder="••••"
+          className="text-center text-3xl tracking-[1em] w-full border-b border-zinc-700 focus:border-amber-500 outline-none py-2 mb-8 bg-transparent text-amber-500 placeholder-zinc-700 transition-colors"
           maxLength={4}
         />
-        <Button onClick={() => pin === '0607' ? onEnter() : alert('Clave incorrecta 💔')} className="w-full">Entrar</Button>
+        <Button onClick={() => pin === '0607' ? onEnter() : alert('Clave incorrecta')} className="w-full">Entrar</Button>
       </Card>
     </div>
   );
 };
 
-// --- APP PRINCIPAL ---
+// --- APP PRINCIPAL DARK ---
 export default function App() {
   const [auth, setAuth] = useState(false);
   const [balance, setBalance] = useState(0);
   const [items, setItems] = useState([]);
   const [history, setHistory] = useState([]);
   
-  // Estados para formularios
   const [newItem, setNewItem] = useState('');
   const [moneyAmount, setMoneyAmount] = useState('');
   const [moneyDesc, setMoneyDesc] = useState('');
-  const [showMoneyForm, setShowMoneyForm] = useState(false); // Para mostrar/ocultar panel de dinero
+  const [showMoneyForm, setShowMoneyForm] = useState(false);
 
-  // 1. Cargar Datos
+  // (La lógica de Firebase sigue igual, solo cambian los estilos visuales)
   useEffect(() => {
     if (!auth) return;
-
-    // A. Saldo Compartido
     const balanceRef = doc(db, "couple_wallet", "general");
     const unsubBalance = onSnapshot(balanceRef, (snap) => {
       if (snap.exists()) setBalance(snap.data().amount);
       else setDoc(balanceRef, { amount: 0 });
     });
-
-    // B. Lista de Compras
     const qItems = query(collection(db, "couple_items"), orderBy("createdAt", "desc"));
     const unsubItems = onSnapshot(qItems, (snap) => setItems(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-
-    // C. Historial
     const qHistory = query(collection(db, "couple_history"), orderBy("date", "desc"));
     const unsubHistory = onSnapshot(qHistory, (snap) => setHistory(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-
     return () => { unsubBalance(); unsubItems(); unsubHistory(); };
   }, [auth]);
 
-  // 2. Funciones Lógicas
-
-  // AGREGAR COSA A LA LISTA
   const handleAddItem = async (e) => {
     e.preventDefault();
     if (!newItem) return;
@@ -103,62 +99,48 @@ export default function App() {
     setNewItem('');
   };
 
-  // MARCAR COMO COMPRADO (Solo borra de la lista, NO resta dinero)
   const handleMarkDone = async (id) => {
-    // Simplemente lo borramos de la lista de pendientes
     await deleteDoc(doc(db, "couple_items", id));
   };
 
-  // MANEJO DE DINERO (Ingreso o Gasto)
   const handleTransaction = async (type) => {
     const val = parseFloat(moneyAmount);
-    if (!val || isNaN(val)) return alert("Pon una cantidad válida amor 🧐");
-    if (!moneyDesc) return alert("Ponle nombre al movimiento (ej. Despensa)");
-
+    if (!val || isNaN(val)) return alert("Cantidad inválida");
+    if (!moneyDesc) return alert("Falta descripción");
     const newBalance = type === 'income' ? balance + val : balance - val;
-
-    // 1. Actualizar Saldo
     await updateDoc(doc(db, "couple_wallet", "general"), { amount: newBalance });
-    
-    // 2. Guardar en Historial
     await addDoc(collection(db, "couple_history"), {
-      description: moneyDesc,
-      amount: val,
-      type: type, // 'income' o 'expense'
-      date: new Date().toISOString()
+      description: moneyDesc, amount: val, type: type, date: new Date().toISOString()
     });
-
-    setMoneyAmount('');
-    setMoneyDesc('');
-    setShowMoneyForm(false);
+    setMoneyAmount(''); setMoneyDesc(''); setShowMoneyForm(false);
   };
 
   if (!auth) return <Login onEnter={() => setAuth(true)} />;
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans pb-20">
-      {/* HEADER SALDO */}
-      <div className="bg-white p-6 rounded-b-3xl shadow-sm border-b border-pink-100 text-center relative z-10">
-        <p className="text-gray-400 text-sm font-medium tracking-wide">FONDO COMÚN</p>
-        <h1 className="text-5xl font-black text-gray-800 my-2 tracking-tight">
-          ${balance.toLocaleString()}
+    <div className="min-h-screen bg-zinc-950 text-zinc-200 font-sans pb-20">
+      {/* HEADER SALDO DARK */}
+      <div className="bg-zinc-900 p-6 rounded-b-3xl border-b border-zinc-800 text-center relative z-10">
+        <p className="text-amber-500/80 text-xs font-medium tracking-[0.2em] uppercase mb-1">Fondo Común</p>
+        <h1 className="text-5xl font-light text-white my-2 tracking-tight">
+          $<span className="font-bold">{balance.toLocaleString()}</span>
         </h1>
         
-        {/* Botón para abrir panel de dinero */}
+        {/* Botón Toggle Dark */}
         <button 
           onClick={() => setShowMoneyForm(!showMoneyForm)}
-          className="mt-4 text-sm font-bold text-pink-500 bg-pink-50 px-4 py-2 rounded-full hover:bg-pink-100 transition-colors"
+          className={`mt-5 text-sm font-medium px-5 py-2.5 rounded-full transition-all border ${showMoneyForm ? 'bg-zinc-800 text-zinc-300 border-zinc-700' : 'bg-amber-950/30 text-amber-400 border-amber-900/50 hover:bg-amber-900/50'}`}
         >
-          {showMoneyForm ? '❌ Cerrar Panel' : '💸 Registrar Dinero / Ticket'}
+          {showMoneyForm ? '✕ Cerrar' : '＋ Registrar Movimiento'}
         </button>
 
-        {/* PANEL DE REGISTRO DE DINERO (Oculto por defecto) */}
+        {/* PANEL DE REGISTRO DARK */}
         {showMoneyForm && (
-          <div className="mt-6 bg-white border border-pink-100 p-4 rounded-xl shadow-lg animate-in fade-in slide-in-from-top-4">
+          <div className="mt-6 bg-zinc-800/50 border border-zinc-700 p-4 rounded-xl animate-in fade-in slide-in-from-top-2 backdrop-blur-sm">
             <input 
               type="text" 
               placeholder="Descripción (ej. Ticket HEB)" 
-              className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 mb-3 outline-none focus:border-pink-300"
+              className={`${inputClasses} mb-3 bg-zinc-900/80 border-zinc-800`}
               value={moneyDesc}
               onChange={e => setMoneyDesc(e.target.value)}
             />
@@ -166,16 +148,16 @@ export default function App() {
               <input 
                 type="number" 
                 placeholder="$0.00" 
-                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 outline-none focus:border-pink-300 font-bold text-gray-700"
+                className={`${inputClasses} font-bold text-lg bg-zinc-900/80 border-zinc-800`}
                 value={moneyAmount}
                 onChange={e => setMoneyAmount(e.target.value)}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3 mt-3">
-              <Button variant="success" onClick={() => handleTransaction('income')} className="text-sm">
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <Button variant="success" onClick={() => handleTransaction('income')} className="text-sm py-2.5">
                 ＋ Ingreso
               </Button>
-              <Button variant="danger" onClick={() => handleTransaction('expense')} className="text-sm">
+              <Button variant="danger" onClick={() => handleTransaction('expense')} className="text-sm py-2.5">
                 － Gastar
               </Button>
             </div>
@@ -183,62 +165,64 @@ export default function App() {
         )}
       </div>
 
-      <div className="max-w-md mx-auto p-4 space-y-6">
+      <div className="max-w-md mx-auto p-4 space-y-8 mt-4">
         
-        {/* SECCIÓN 1: LISTA DE DESEOS / SUPER */}
+        {/* SECCIÓN 1: LISTA DEL SÚPER DARK */}
         <section>
-          <h2 className="text-lg font-bold text-gray-700 mb-3 px-2 flex items-center gap-2">
-            🛒 Lista del Súper <span className="bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full text-xs">{items.length}</span>
+          <h2 className="text-sm font-medium text-zinc-400 mb-3 px-2 flex items-center justify-between uppercase tracking-wider">
+            <span>🛒 Lista del Súper</span>
+            <span className="bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded text-xs">{items.length}</span>
           </h2>
           
           <form onSubmit={handleAddItem} className="flex gap-2 mb-4">
             <input 
               type="text" 
-              placeholder="Agregar a la lista..." 
-              className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-pink-400 shadow-sm"
+              placeholder="Agregar ítem..." 
+              className={`${inputClasses} flex-1 bg-zinc-900 border-zinc-800 shadow-sm`}
               value={newItem}
               onChange={e => setNewItem(e.target.value)}
             />
-            <Button className="px-6">＋</Button>
+            <Button className="px-5 bg-amber-500 hover:bg-amber-400 text-zinc-900">＋</Button>
           </form>
 
-          <div className="space-y-3">
+          <div className="space-y-2">
             {items.length === 0 && (
-              <div className="text-center py-8 opacity-50">
-                <p className="text-4xl mb-2">✨</p>
-                <p className="text-sm">Lista vacía</p>
+              <div className="text-center py-8 opacity-30">
+                <p className="text-3xl mb-2">✨</p>
+                <p className="text-sm font-light">Todo limpio</p>
               </div>
             )}
             {items.map(item => (
-              <Card key={item.id} className="flex items-center justify-between !p-4 hover:shadow-md transition-shadow">
-                <span className="font-semibold text-gray-700 text-lg">{item.name}</span>
+              <Card key={item.id} className="flex items-center justify-between !p-3.5 hover:border-zinc-700 transition-colors group bg-zinc-900/80">
+                <span className="font-medium text-zinc-200">{item.name}</span>
                 <button 
                   onClick={() => handleMarkDone(item.id)}
-                  className="bg-gray-100 text-gray-400 hover:bg-emerald-100 hover:text-emerald-600 p-2 rounded-lg font-bold text-sm transition-colors flex items-center gap-2"
+                  className="text-zinc-500 hover:text-amber-400 p-2 rounded-lg text-sm transition-colors opacity-50 group-hover:opacity-100"
+                  title="Marcar como listo"
                 >
-                  ✅ Listo
+                  ✓ Listo
                 </button>
               </Card>
             ))}
           </div>
         </section>
 
-        {/* SECCIÓN 2: HISTORIAL DE MOVIMIENTOS */}
-        <section className="opacity-80">
-          <h2 className="text-lg font-bold text-gray-700 mb-3 px-2 mt-8">📜 Tickets y Movimientos</h2>
-          <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50 overflow-hidden shadow-sm">
+        {/* SECCIÓN 2: HISTORIAL DARK */}
+        <section>
+          <h2 className="text-sm font-medium text-zinc-400 mb-3 px-2 mt-8 uppercase tracking-wider">📜 Últimos Tickets</h2>
+          <div className="bg-zinc-900 rounded-2xl border border-zinc-800 divide-y divide-zinc-800 overflow-hidden">
             {history.slice(0, 5).map(h => (
-              <div key={h.id} className="flex justify-between items-center p-4">
+              <div key={h.id} className="flex justify-between items-center p-4 hover:bg-zinc-800/50 transition-colors">
                 <div>
-                  <p className="font-medium text-gray-800">{h.description}</p>
-                  <p className="text-xs text-gray-400">{new Date(h.date).toLocaleDateString()}</p>
+                  <p className="font-medium text-zinc-300">{h.description}</p>
+                  <p className="text-[10px] text-zinc-500 uppercase tracking-widest">{new Date(h.date).toLocaleDateString()}</p>
                 </div>
-                <span className={`font-bold ${h.type === 'income' ? 'text-emerald-500' : 'text-pink-500'}`}>
+                <span className={`font-bold ${h.type === 'income' ? 'text-emerald-400' : 'text-red-400'}`}>
                   {h.type === 'income' ? '+' : '-'}${h.amount.toLocaleString()}
                 </span>
               </div>
             ))}
-            {history.length === 0 && <p className="text-center py-4 text-sm text-gray-400">Sin movimientos aún</p>}
+            {history.length === 0 && <p className="text-center py-6 text-xs text-zinc-600 uppercase tracking-widest">Sin movimientos</p>}
           </div>
         </section>
 
